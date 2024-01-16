@@ -16,4 +16,13 @@ export class AppController {
     const selector: ISelector = selectors.filter((x) => url.includes(x.url))[0];
     return this.webScraperService.scrapeWebsite(url, selector);
   }
+
+  @Get('/category')
+  async category(@Query('category') category: string): Promise<any> {
+    if (!category) {
+      throw new Error('Category was not specified');
+    }
+
+    return this.webScraperService.scrapeCategory(category, selectors[1]);
+  }
 }

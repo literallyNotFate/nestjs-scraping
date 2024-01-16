@@ -14,7 +14,7 @@ export const selectors: ISelector[] = [
   {
     url: 'https://enter.online',
     config: {
-      items: '.product-card',
+      items: '.row.rowlast',
       name: '.product-title',
       specification: 'product-descr',
       price: '.price-new',
