@@ -9,9 +9,7 @@ export class WebscraperService {
     try {
       const response = await axios.get(url);
       const $ = cheerio.load(response.data);
-
-      const products = this.getProducts($, selectors);
-      return products;
+      return this.get($, selectors);
     } catch (error) {
       throw new Error(`Web-scraping error: ${error.message}`);
     }
@@ -23,9 +21,9 @@ export class WebscraperService {
       const response = await axios.get(finalUrl);
       const $ = cheerio.load(response.data);
 
-      const categoryUrls = $('.category_block')
+      const categoryUrls = $(selectors.category.items)
         .find('a')
-        .map((index, data) => $(data).attr('href'))
+        .map((i, data) => $(data).attr('href'))
         .get();
 
       const results = await Promise.all(
@@ -35,7 +33,7 @@ export class WebscraperService {
       const parsed = [];
       for (let i = 0; i < categoryUrls.length; i++) {
         const $pr = cheerio.load(results[i]);
-        const products = this.getProducts($pr, selectors);
+        const products = this.get($pr, selectors);
         parsed.push(products);
       }
 
@@ -45,34 +43,39 @@ export class WebscraperService {
     }
   }
 
-  private getProducts($: cheerio.CheerioAPI, selectors: ISelector) {
+  private get($: cheerio.CheerioAPI, selectors: ISelector) {
     const products = [];
-    const names = $(selectors.config.name)
-      .map((index, data) => $(data).text().replaceAll('\n', ''))
-      .get();
 
-    const specification = $(selectors.config.specification)
-      .map((index, data) => $(data).text().trim())
-      .get();
+    $(selectors.product.items).map((i, el) => {
+      const name = $(el)
+        .find(selectors.product.name)
+        .text()
+        .trim()
+        .replaceAll('\n', '');
 
-    const price = $(selectors.config.price)
-      .map((index, data) => $(data).text().trim())
-      .get();
+      //   const brand = $(el)
+      //     .find(selectors.product.specifications)
+      //     .attr('data-brand');
 
-    const discount = $(selectors.config.discount)
-      .map((index, data) => $(data).text().trim())
-      .get();
+      const specifications = $(el)
+        .find(selectors.product.specifications)
+        .text()
+        .trim();
 
-    for (let i = 0; i < names.length; i++) {
-      const data = {
-        name: names[i],
-        specification: specification[i],
-        price: price[i],
-        discount: discount[i],
-      };
+      const price = parseInt(
+        $(el).find(selectors.product.price).text().trim().replace(/\s+/g, ''),
+      );
+      const discount =
+        parseInt(
+          $(el)
+            .find(selectors.product.discount)
+            .text()
+            .trim()
+            .replace(/\s+/g, ''),
+        ) || 0;
 
-      products.push(data);
-    }
+      products.push({ name, specifications, price, discount });
+    });
 
     return products;
   }

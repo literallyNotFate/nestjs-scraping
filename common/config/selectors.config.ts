@@ -3,32 +3,44 @@ import { ISelector } from 'common/interfaces';
 export const selectors: ISelector[] = [
   {
     url: 'https://darwin.md',
-    config: {
+    product: {
       items: '.products',
       name: '.title > a',
-      specification: '.specification',
+      specifications: '.specification',
       price: '.price-new',
       discount: '.difprice',
+    },
+    categories: [],
+    category: {
+      items: '',
     },
   },
   {
     url: 'https://enter.online',
-    config: {
-      items: '.row.rowlast',
+    product: {
+      items: '.product-card > div',
       name: '.product-title',
-      specification: 'product-descr',
-      price: '.price-new',
+      specifications: '.product-descr',
+      price: '.grid-price > span',
       discount: '.discount',
+    },
+    categories: [],
+    category: {
+      items: '.category_block',
     },
   },
   {
     url: 'https://smart.md',
-    config: {
+    product: {
       items: '',
       name: '.custom_product_title > h4',
-      specification: '',
+      specifications: '',
       price: '.custom_product_price > .regular',
       discount: '.custom_product_price > .special',
+    },
+    categories: [],
+    category: {
+      items: '',
     },
   },
 ];

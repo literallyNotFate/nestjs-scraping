@@ -8,7 +8,7 @@ export class AppController {
   constructor(private readonly webScraperService: WebscraperService) {}
 
   @Get('/scrape')
-  async scrape(@Query('url') url: string): Promise<any> {
+  async scrape(@Query('q') url: string): Promise<any> {
     if (!url) {
       throw new Error('URL was not specified');
     }
@@ -18,7 +18,7 @@ export class AppController {
   }
 
   @Get('/category')
-  async category(@Query('category') category: string): Promise<any> {
+  async category(@Query('q') category: string): Promise<any> {
     if (!category) {
       throw new Error('Category was not specified');
     }
