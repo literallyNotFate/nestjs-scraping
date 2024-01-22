@@ -14,15 +14,31 @@ export class AppController {
     }
 
     const selector: ISelector = selectors.filter((x) => url.includes(x.url))[0];
-    return this.webScraperService.scrapeWebsite(url, selector);
+    return this.webScraperService.scrapeStatic(url, selector);
+  }
+
+  @Get('/scrapeAll')
+  async scrapeAll(@Query('q') url: string): Promise<any> {
+    if (!url) {
+      throw new Error('URL was not specified');
+    }
+
+    const selector: ISelector = selectors.filter((x) => url.includes(x.url))[0];
+    return this.webScraperService.scrapeAll(url, selector);
   }
 
   @Get('/category')
-  async category(@Query('q') category: string): Promise<any> {
-    if (!category) {
-      throw new Error('Category was not specified');
+  async category(
+    @Query('r') resource: string,
+    @Query('q') category: string,
+  ): Promise<any> {
+    if (!category || !resource) {
+      throw new Error('Category or resource were not specified');
     }
 
-    return this.webScraperService.scrapeCategory(category, selectors[1]);
+    const selector: ISelector = selectors.filter(
+      (x) => x.name.toLowerCase() == resource.toLowerCase(),
+    )[0];
+    return this.webScraperService.scrapeCategory(category, selector);
   }
 }

@@ -5,7 +5,7 @@ import { ISelector } from 'common/interfaces';
 
 @Injectable()
 export class WebscraperService {
-  async scrapeWebsite(url: string, selectors: ISelector) {
+  async scrapeStatic(url: string, selectors: ISelector) {
     try {
       const response = await axios.get(url);
       const $ = cheerio.load(response.data);
@@ -26,45 +26,61 @@ export class WebscraperService {
         .map((i, data) => $(data).attr('href'))
         .get();
 
-      const results = await Promise.all(
-        categoryUrls.map((x) => axios.get(x).then((res) => res.data)),
-      );
-
-      const parsed = [];
+      const data = [];
       for (let i = 0; i < categoryUrls.length; i++) {
-        const $pr = cheerio.load(results[i]);
-        const products = this.get($pr, selectors);
-        parsed.push(products);
+        const products = await this.scrapeAll(categoryUrls[i], selectors);
+        data.push(products);
       }
 
-      return parsed;
+      return data.flat();
     } catch (error) {
+      console.log(error);
       throw new Error(`Web-scraping error: ${error.message}`);
     }
+  }
+
+  async scrapeAll(url: string, selectors: ISelector) {
+    let page: number = 1;
+    let prev = null;
+    const result = [];
+
+    while (true) {
+      const data = await this.scrapeStatic(url + `?page=${page}`, selectors);
+
+      if (JSON.stringify(prev) === JSON.stringify(data)) {
+        break;
+      }
+
+      prev = data;
+      result.push(data);
+      page++;
+    }
+
+    return result.flat();
   }
 
   private get($: cheerio.CheerioAPI, selectors: ISelector) {
     const products = [];
 
     $(selectors.product.items).map((i, el) => {
-      const name = $(el)
-        .find(selectors.product.name)
-        .text()
-        .trim()
-        .replaceAll('\n', '');
+      const name =
+        $(el).find(selectors.product.name).text().trim().replaceAll('\n', '') ||
+        '';
 
-      //   const brand = $(el)
-      //     .find(selectors.product.specifications)
-      //     .attr('data-brand');
+      const brandString: string[] = selectors.product.brand.split(' ');
+      const brand = $(el).find(brandString[0]).attr(brandString[1]) || '';
 
-      const specifications = $(el)
-        .find(selectors.product.specifications)
-        .text()
-        .trim();
+      const typeString: string[] = selectors.product.type.split(' ');
+      const type = $(el).find(typeString[0]).attr(typeString[1]) || '';
 
-      const price = parseInt(
-        $(el).find(selectors.product.price).text().trim().replace(/\s+/g, ''),
-      );
+      const specifications =
+        $(el).find(selectors.product.specifications).text().trim() || '';
+
+      const price =
+        parseInt(
+          $(el).find(selectors.product.price).text().trim().replace(/\s+/g, ''),
+        ) || 0;
+
       const discount =
         parseInt(
           $(el)
@@ -74,7 +90,7 @@ export class WebscraperService {
             .replace(/\s+/g, ''),
         ) || 0;
 
-      products.push({ name, specifications, price, discount });
+      products.push({ name, brand, type, specifications, price, discount });
     });
 
     return products;
